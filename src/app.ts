@@ -29,7 +29,7 @@ const env = envSchema.parse(process.env);
 
 const transporter = nodemailer.createTransport({
     host: env.SMTP_HOST,
-    port: 587,
+    port: Number(env.SMTP_PORT),
     secure: false, // upgrade later with STARTTLS
     auth: {
         user: env.SMTP_USER,
