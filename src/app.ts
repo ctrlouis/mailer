@@ -1,6 +1,8 @@
+import fs from 'node:fs';
+import { pipeline } from 'node:stream/promises';
 import Fastify from 'fastify';
 import cors from '@fastify/cors'
-import fastifyMultipart from '@fastify/multipart';
+import multipart from '@fastify/multipart';
 import nodemailer from 'nodemailer';
 import { z } from 'zod';
 
@@ -14,6 +16,13 @@ const envSchema = z.object({
     FROM_NAME: z.string().default(''),
     PORT: z.string().default('3000'),
     HOST: z.string().default('0.0.0.0'),
+});
+
+const dataMailSchema = z.object({
+    to: z.string(),
+    subject: z.string(),
+    text: z.string().optional(),
+    html: z.string().optional(),
 });
 
 const env = envSchema.parse(process.env);
@@ -30,28 +39,37 @@ const transporter = nodemailer.createTransport({
 
 const fastify = Fastify();
 fastify.register(cors, {
-     origin: [
+    origin: [
         'http://localhost:5173',
         'http://localhost:8080',
         'http://127.0.0.1:5173',
         'http://127.0.0.1:8080',
     ],
 });
-fastify.register(fastifyMultipart);
+fastify.register(multipart);
 
-fastify.get('/test', async (request, reply) => {
+fastify.get('/test', async (req, reply) => {
     await transporter.verify();
     return 'SMTP OK';
 });
 
-fastify.post('/mail', async (request, reply) => {
+fastify.post('/mail', async (req, reply) => {
     try {
 
-        const data = await request.file()
-
-        if (!data || !data.to || !data.subject) {
-            return reply.status(400).send({ error: 'to et subject requis' });
+        let formData: any = {};
+        const parts = req.parts();
+        for await (const part of parts) {
+            if (part.type === 'file') {
+                await pipeline(part.file, fs.createWriteStream(part.filename));
+            } else {
+                // console.log(part);
+                formData[part.fieldname] = part.value;
+            }
         }
+
+        const data = dataMailSchema.parse(formData);
+    
+        // const fileBuffer = await data.file.toBuffer();
 
         await transporter.sendMail({
             from: env.FROM_NAME ? `"${env.FROM_NAME}" <${env.FROM_EMAIL}>` : env.FROM_EMAIL, // sender address
@@ -59,18 +77,17 @@ fastify.post('/mail', async (request, reply) => {
             subject: data.subject,
             text: data.text,
             html: data.html,
-            attachments: [
-                {
-                    filename: "bon-livraison.pdf",
-                    content: data.attachement, // truncated
-                    encoding: "base64",
-                }
-            ],
+            // attachments: [
+            //     {
+            //         filename: "bon-livraison.pdf",
+            //         content: fileBuffer, // truncated
+            //     }
+            // ],
         });
 
         return { success: true };
     } catch (err) {
-        reply.status(500).send({ error: 'Erreur lors de l\'envoi' });
+        reply.status(500).send({ error: err });
     }
     return;
 });
