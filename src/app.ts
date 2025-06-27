@@ -56,11 +56,18 @@ fastify.get('/test', async (req, reply) => {
 fastify.post('/mail', async (req, reply) => {
     try {
 
+        let attachments: any[] = [];
         let formData: any = {};
         const parts = req.parts();
         for await (const part of parts) {
             if (part.type === 'file') {
-                await pipeline(part.file, fs.createWriteStream(part.filename));
+                // await pipeline(part.file, fs.createWriteStream(part.filename));
+                const fileBuffer = await part.toBuffer();
+                attachments.push({
+                    filename: part.filename,
+                    content: fileBuffer,
+                    contentType: part.mimetype
+                });
             } else {
                 // console.log(part);
                 formData[part.fieldname] = part.value;
@@ -69,7 +76,6 @@ fastify.post('/mail', async (req, reply) => {
 
         const data = dataMailSchema.parse(formData);
     
-        // const fileBuffer = await data.file.toBuffer();
 
         await transporter.sendMail({
             from: env.FROM_NAME ? `"${env.FROM_NAME}" <${env.FROM_EMAIL}>` : env.FROM_EMAIL, // sender address
@@ -77,12 +83,7 @@ fastify.post('/mail', async (req, reply) => {
             subject: data.subject,
             text: data.text,
             html: data.html,
-            // attachments: [
-            //     {
-            //         filename: "bon-livraison.pdf",
-            //         content: fileBuffer, // truncated
-            //     }
-            // ],
+            attachments: attachments,
         });
 
         return { success: true };
