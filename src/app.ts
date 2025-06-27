@@ -1,5 +1,3 @@
-import fs from 'node:fs';
-import { pipeline } from 'node:stream/promises';
 import Fastify from 'fastify';
 import cors from '@fastify/cors'
 import multipart from '@fastify/multipart';
@@ -14,8 +12,6 @@ const envSchema = z.object({
     SMTP_PASS: z.string(),
     FROM_EMAIL: z.string().email(),
     FROM_NAME: z.string().default(''),
-    PORT: z.string().default('3000'),
-    HOST: z.string().default('0.0.0.0'),
 });
 
 const dataMailSchema = z.object({
@@ -30,7 +26,7 @@ const env = envSchema.parse(process.env);
 const transporter = nodemailer.createTransport({
     host: env.SMTP_HOST,
     port: Number(env.SMTP_PORT),
-    secure: false, // upgrade later with STARTTLS
+    secure: env.SMTP_SECURE.toLowerCase() === 'true', // upgrade later with STARTTLS
     auth: {
         user: env.SMTP_USER,
         pass: env.SMTP_PASS,
