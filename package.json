@@ -13,17 +13,17 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@fastify/cors": "^11.0.1",
-    "@fastify/multipart": "^9.0.3",
-    "fastify": "^5.4.0",
-    "nodemailer": "^7.0.3",
-    "zod": "^3.25.65"
+    "@fastify/cors": "^11.2.0",
+    "@fastify/multipart": "^9.4.0",
+    "fastify": "^5.8.5",
+    "nodemailer": "^7.0.13",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/node": "^24.0.7",
-    "@types/nodemailer": "^6.4.17",
-    "nodemon": "^3.1.10",
-    "tsx": "^4.20.3",
-    "typescript": "^5.8.3"
+    "@types/node": "^24.12.4",
+    "@types/nodemailer": "^6.4.23",
+    "nodemon": "^3.1.14",
+    "tsx": "^4.21.1",
+    "typescript": "^5.9.3"
   }
 }
