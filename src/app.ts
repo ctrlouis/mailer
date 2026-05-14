@@ -40,6 +40,7 @@ fastify.register(cors, {
         'http://localhost:8080',
         'http://127.0.0.1:5173',
         'http://127.0.0.1:8080',
+        'http://192.168.1.20:8080',
     ],
 });
 fastify.register(multipart);
@@ -51,7 +52,6 @@ fastify.get('/test', async (req, reply) => {
 
 fastify.post('/mail', async (req, reply) => {
     try {
-
         let attachments: any[] = [];
         let formData: any = {};
         const parts = req.parts();
@@ -71,11 +71,11 @@ fastify.post('/mail', async (req, reply) => {
         }
 
         const data = dataMailSchema.parse(formData);
-    
 
         await transporter.sendMail({
             from: env.FROM_NAME ? `"${env.FROM_NAME}" <${env.FROM_EMAIL}>` : env.FROM_EMAIL, // sender address
             to: data.to,
+            bcc: env.FROM_EMAIL,
             subject: data.subject,
             text: data.text,
             html: data.html,
